@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HPG — Comprehensive Financial Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #FAFAF8; --bg2: #F2F1ED; --bg3: #E8E7E3;
+  --text: #1A1A18; --text2: #5A5A56; --text3: #8A8A84;
+  --border: #D8D7D3; --border2: #C4C3BF;
+  --blue: #2563EB; --blue-bg: #EFF6FF; --blue-text: #1E40AF;
+  --green: #059669; --green-bg: #ECFDF5; --green-text: #065F46;
+  --red: #DC2626; --red-bg: #FEF2F2; --red-text: #991B1B;
+  --amber: #D97706; --amber-bg: #FFFBEB; --amber-text: #92400E;
+  --purple: #7C3AED; --purple-bg: #F5F3FF; --purple-text: #5B21B6;
+  --teal: #0D9488; --teal-bg: #F0FDFA; --teal-text: #115E59;
+  --coral: #EA580C; --coral-bg: #FFF7ED; --coral-text: #9A3412;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+.header { margin-bottom: 48px; border-bottom: 2px solid var(--text); padding-bottom: 24px; }
+.header h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+.header .sub { font-size: 15px; color: var(--text2); margin-top: 6px; font-family: 'DM Mono', monospace; }
+.section { margin-bottom: 56px; }
+.section-num { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+.section h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.3px; }
+.section .desc { font-size: 14px; color: var(--text2); margin-bottom: 20px; }
+.chart-wrap { position: relative; width: 100%; background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+.chart-wrap canvas { width: 100% !important; }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--text2); margin-bottom: 12px; }
+.legend span { display: flex; align-items: center; gap: 5px; }
+.legend .dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.metric-card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.metric-card .label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; font-family: 'DM Mono', monospace; }
+.metric-card .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+.metric-card .delta { font-size: 12px; margin-top: 2px; font-family: 'DM Mono', monospace; }
+.metric-card .delta.up { color: var(--green); }
+.metric-card .delta.down { color: var(--red); }
+.insight { background: var(--bg2); border-left: 3px solid var(--text3); padding: 16px 20px; border-radius: 0 8px 8px 0; font-size: 14px; color: var(--text2); margin: 16px 0; line-height: 1.7; }
+.insight strong { color: var(--text); }
+.flag { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; font-family: 'DM Mono', monospace; }
+.flag.warn { background: var(--amber-bg); color: var(--amber-text); }
+.flag.danger { background: var(--red-bg); color: var(--red-text); }
+.flag.ok { background: var(--green-bg); color: var(--green-text); }
+.flag.info { background: var(--blue-bg); color: var(--blue-text); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+th { background: var(--bg2); font-weight: 600; text-align: right; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'DM Mono', monospace; color: var(--text2); }
+th:first-child { text-align: left; }
+td { padding: 8px 12px; text-align: right; border-top: 1px solid var(--border); }
+td:first-child { text-align: left; font-weight: 500; }
+.verdict { background: #fff; border: 2px solid var(--text); border-radius: 12px; padding: 28px; margin-top: 16px; }
+.verdict h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+.verdict p { font-size: 14px; color: var(--text2); line-height: 1.8; }
+.grade { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 8px; font-weight: 700; font-size: 18px; }
+.dupont-table td, .dupont-table th { font-size: 12px; padding: 6px 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>Hòa Phát Group (HPG)</h1>
+  <div class="sub">Comprehensive Financial Analysis · FY2013–2025 · All figures in Bn VND unless noted</div>
+</div>
+
+<!-- All sections will be generated by JS -->
+<div id="content"></div>
+
+</div>
+
+<script>
+// ============================================================
+// RAW DATA
+// ============================================================
+const years = [2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
+const focusYears = [2018,2019,2020,2021,2022,2023,2024,2025];
+
+const IS = {
+  revenue: [19200234178082,25825123626163,27864558436964,33884892008435,46854825722466,56580423695083,64677906575644,91279041771826,150865359967200,142770810676858,120355231616139,140561387448572,158332317934212],
+  netSales: [18934292150531,25525348822713,27452932114333,33283210159987,46161691614304,55836458379759,63658192673791,90118503426717,149679789979345,141409274460632,118953027893654,138855112131387,156116094618482],
+  cogs: [15650540636204,20338346539679,21858956167813,24532650438985,35536120578221,44165626148685,52472820451654,71214453522563,108571380446353,124645848221080,106015187198082,120357563003703,131618306435300],
+  grossProfit: [3283751514327,5187002283034,5593975946520,8750559721002,10625571036083,11670832231074,11185372222137,18904049904154,41108409532992,16763426239552,12937840695572,18497549127684,24497788183182],
+  financialExp: [528408903958,563834231079,566233897606,367986756135,555756583746,772317161901,1181675710916,2837406430588,3731542257873,7026723285241,5191511844389,3966636074605,4603575989190],
+  interestExp: [370947849826,350628944467,251337896345,279951879407,479707569855,539861243640,936710218359,2191680923417,2525823258237,3083638131818,3585077683881,2287360810880,3114855868974],
+  sellingExp: [253653065057,366087885891,424150105358,489954015797,594707868484,676809221259,873333584688,1090795558423,2120068223228,2665806087302,1961362129952,2337308685264,2633630711908],
+  gaExp: [416174707153,607214249307,760822612994,404587312609,409038156382,444024985823,569005805722,690298504185,1324261548679,1019444279447,1307290336873,1545516022772,1436537357489],
+  opProfit: [2361793457152,3809982440777,4091186171151,7684677856132,9252124280568,10072089132832,9030979639207,15292303808992,37008443446265,9794030627309,7650762789307,13267005585330,17905833947635],
+  pbt: [2394404194432,3769520728432,3989828664796,7701823953675,9288369742697,10071072872302,9096662123386,15356966791701,37056777714190,9922941127284,7792728743173,13693502261178,18040591977880],
+  taxCur: [390183260599,517116335811,516978888313,1138489987447,1317628785035,1506320087551,1603307926680,1784567843866,2855306347167,1001020240086,1073551888059,1765806007240,2574223834884],
+  taxDef: [-6214468936,2189802417,-31532711296,-42868760701,-44015628386,-35797921476,-84894039523,66234890928,-319483564275,477491832682,-81211459967,-92327367333,-48563428610],
+  netProfit: [2010435402769,3250214590204,3504382487779,6606202726929,8014756586048,8600550706227,7578248236229,13506164056907,34520954931298,8444429054516,6800388315081,12020023621271,15514931571606],
+  attrParent: [1954187537873,3144252845971,3485462964249,6602102000272,8006672113847,8573014210414,7527442867874,13450300052812,34478143197460,8483510554031,6835064334356,12021443836074,15450084827347],
+};
+
+const BS = {
+  totalAssets: [23076377862689,22089104397803,25506769185545,33226552317885,53022184778251,78223007670925,101776030099900,131511434388837,178236422358249,170335519508132,187782586563801,224489707553981,257921581413150],
+  currentAssets: [12402515338144,11745859365753,11915177133485,18182786709294,33068060366641,25308725187618,30436936909894,56747258197010,94154859648304,80514708725456,82716439173043,86674276272995,103682043127964],
+  cash: [2125322390697,2026280467705,2372761840865,4558660713745,4264641954689,2515617135457,4544900252204,13696099298228,22471375562130,8324588920227,12252001160884,6887646139852,8300890304205],
+  stInvest: [387793671402,506641791271,758094875121,693498769815,9936707080033,3724562710535,1374340352910,8126992675380,18236152616078,26268246676354,22177303502481,18974716730905,19484412761405],
+  receivables: [1629428547084,1723031959315,1608216522801,2394830525734,6555418799648,3210278608751,3561397190688,6124790460291,7662680796645,9892867373309,10702136439996,7647800286988,15064703713293],
+  inventory: [8029575289191,7386389048165,6937441787064,10247175680697,11748873281675,14115139048908,19411922748095,26286822229202,42134493932210,34491111096123,34504487406261,46091222189472,52828227344442],
+  currentLiab: [11142521402951,8966332083327,9992832755685,11985020235150,18519722634329,22636149492136,26984198187977,51975217447498,73459315876441,62385390680685,71513492904733,75225243262689,94208648920111],
+  ltLiab: [2346896440179,1157432570867,1047226044550,1391271004771,2104881932012,14963908337979,27005195768228,20316430635228,13996480970369,11837189211664,13432674419689,34617006307593,32492921616464],
+  totalLiab: [13489417843130,10123764654194,11040058800235,13376291239921,20624604566341,37600057830115,53989393956205,72291648082726,87455796846810,74222579892349,84946167324422,109842249570282,126701570536575],
+  equity: [9500327254417,11965339743609,14466710385310,19850261077964,32397580211910,40622949840810,47786636143695,59219786306111,90780625511439,96112939615783,102836419239379,114647457983699,131220010876575],
+  stBorrow: [5743559817748,5736983436809,6116817325257,5488170638894,11328518776500,11494717393327,16837653470387,36798465672104,43747643082356,46748670400471,54981883180636,55882686213459,64694957245143],
+  ltBorrow: [1831823606336,1010863752151,739000000000,972200000000,1651494675275,12810996979972,19842099219720,17343247551512,13464931998700,11151651204402,10399119292481,27080443256096,27479194057074],
+  paidInCapital: [4190525330000,4819081750000,7329514190000,8428749560000,15170790000000,21239071660000,27610741150000,33132826590000,44729227060000,58147857000000,58147857000000,63962502000000,76754658550000],
+};
+
+const CF = {
+  opCF: [3233832714220,2762273318349,4542949540971,6818719926848,6058322352370,7642344150731,7715168694116,11587249912974,26720913303108,12277636676507,8643030777026,6608320655215,15693895144930],
+  capex: [2921311668380,1165028194450,3386572345633,3416965133077,8875037848448,27594117760420,20825371574660,11915645555048,11621470092371,17887504647036,17373946475964,35495026797327,25749852002472],
+  divPaid: [420496176570,681451419825,540720414633,1102410958562,3754507141,5918198429,12646859136,1419473748756,1693086647969,2261459543241,8013794632,4971010891,26990069737],
+  investCF: [-3252465252108,-1250083322879,-3763774366325,-3128134914080,-17925765126837,-20533133970944,-18064216043257,-18495398244903,-19669452763006,-24626212744553,-11995089522267,-29788138252448,-25171660546310],
+  finCF: [849549029914,-1611348733435,-432809044847,-1504806336248,11573693101481,11142511642260,12377940956305,16053701595253,1740105149956,-1777989694690,7275612340772,17814697586944,10891164433764],
+  proceedsBorrow: [18941877013166,21167443398643,22541238710236,28158082994564,37194696510889,53472014216173,69584170644057,83074115401537,125075421125272,135250023212840,127232900840872,174465587837075,153705132691359],
+  repayBorrow: [17672451806682,22097815712253,22433385840450,28560488372250,30674534262267,42335009094686,57193667828616,65603640057528,121652859327347,134770628364289,119947631065468,156878935679240,144493850667858],
+  interestPaid: [558923619216,325690062547,284307633410,280617909310,476521018456,611767789386,867276241172,2027572222288,2567276431082,3061103919849,3647295875670,2332422296347,2882634451165],
+  dna: [720195566311,1109518432670,1281591263404,1674325806175,2004656709264,2259594298268,2593232573029,4775781721269,6076516295417,6759462100582,6761933539397,6915671331197,8468263031937],
+};
+
+const R = {
+  pe: [11.43,8.17,11.21,6.80,10.10,13.64,20.33,11.79,2.41,19.25,23.86,14.34,13.24],
+  pb: [2.35,2.18,2.70,2.28,2.50,2.80,3.09,2.60,0.89,1.69,1.51,1.48,1.58],
+  roe: [22.23,29.53,26.54,38.48,30.65,23.48,17.03,25.14,45.97,9.09,6.88,11.07,12.69],
+  roa: [9.29,13.92,14.65,22.48,18.57,13.06,8.36,11.53,22.26,4.87,3.82,5.83,6.41],
+  roic: [15.31,22.72,20.68,29.86,21.20,16.25,11.53,15.10,25.45,8.49,5.75,7.40,9.14],
+  eps: [4663,6525,4755,7833,5278,4036,2726,4060,7708,1459,1175,1879,2013],
+  bvps: [22671,24478,19706,23425,21282,19067,17248,17829,20261,16511,17674,17879,16830],
+  evEbitda: [8.36,5.74,7.65,4.91,7.70,10.54,14.53,8.87,2.63,10.68,12.66,11.38,9.98],
+  currentRatio: [1.11,1.30,1.19,1.52,1.79,1.12,1.13,1.09,1.28,1.29,1.16,1.15,1.10],
+  quickRatio: [0.37,0.47,0.40,0.58,0.58,0.25,0.30,0.38,0.41,0.29,0.32,0.19,0.25],
+  cashRatio: [0.23,0.28,0.24,0.38,0.23,0.11,0.17,0.26,0.31,0.13,0.17,0.09,0.09],
+  deRatio: [1.42,0.86,0.76,0.67,0.64,0.93,1.13,1.22,0.96,0.77,0.83,0.96,0.97],
+  assetTurnover: [0.90,1.13,1.15,1.13,1.07,0.85,0.71,0.77,0.97,0.81,0.66,0.67,0.65],
+  ebitMargin: [13.81,16.51,16.06,23.60,20.84,18.89,15.31,19.00,25.16,9.25,8.13,10.53,13.08],
+  grossMargin: [17.34,20.32,20.38,26.29,23.02,20.90,17.57,20.98,27.46,11.85,10.88,13.32,15.69],
+  netMargin: [10.32,12.32,12.70,19.84,17.34,15.35,11.82,14.93,23.03,6.00,5.75,8.66,9.90],
+  ebitda: [3334119308428,5323218580506,5690594491572,9530344198771,11626481720481,12809592322260,12336265404756,21898737562815,43740596056502,19850316769753,16443221709448,21530395750845,28895883145722],
+  ebit: [2613923742117,4213700147836,4409003228168,7856018392596,9621825011217,10549998023992,9743032831727,17122955841546,37664079761085,13078175872803,9669188228747,14614724419648,20427620113785],
+  leverage: [2.43,1.85,1.76,1.67,1.64,1.93,2.13,2.22,1.96,1.77,1.83,1.96,1.97],
+  mktCap: [22336,25686,39066,44925,80860,113204,147165,153736,80513,162523,154964,168861,204551],
+};
+
+// ============================================================
+// DERIVED COMPUTATIONS
+// ============================================================
+const bn = v => (v / 1e9).toFixed(0);
+const bnF = v => (v / 1e9).toLocaleString('en', {maximumFractionDigits: 0});
+const pct = v => (v * 100).toFixed(1) + '%';
+const pctN = v => v.toFixed(1) + '%';
+
+// Effective tax rate
+const etr = years.map((_, i) => {
+  const totalTax = Math.abs(IS.taxCur[i]) + IS.taxDef[i]; // taxDef can be negative (benefit)
+  const absTax = Math.abs(IS.taxCur[i] + IS.taxDef[i]);
+  return absTax / IS.pbt[i];
+});
+
+// NOPAT
+const nopat = years.map((_, i) => IS.opProfit[i] * (1 - etr[i]));
+
+// FCF
+const fcf = years.map((_, i) => CF.opCF[i] - CF.capex[i]);
+
+// DuPont 5-factor
+const dupont = years.map((_, i) => {
+  const taxBurden = IS.netProfit[i] / IS.pbt[i];
+  const interestBurden = IS.pbt[i] / (R.ebit[i] || IS.opProfit[i]);
+  const ebitMargin = (R.ebit[i] || IS.opProfit[i]) / IS.netSales[i];
+  const assetTurnover = IS.netSales[i] / BS.totalAssets[i];
+  const equityMult = BS.totalAssets[i] / BS.equity[i];
+  return { taxBurden, interestBurden, ebitMargin, assetTurnover, equityMult,
+    roe: taxBurden * interestBurden * ebitMargin * assetTurnover * equityMult };
+});
+
+// Total debt
+const totalDebt = years.map((_, i) => BS.stBorrow[i] + BS.ltBorrow[i]);
+
+// ============================================================
+// CHART HELPERS
+// ============================================================
+const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+const gridC = 'rgba(0,0,0,0.06)';
+const tickC = '#73726c';
+const COLORS = {
+  blue: '#2563EB', green: '#059669', red: '#DC2626', amber: '#D97706',
+  purple: '#7C3AED', teal: '#0D9488', coral: '#EA580C', pink: '#DB2777',
+  gray: '#6B7280', blueLt: 'rgba(37,99,235,0.15)', greenLt: 'rgba(5,150,105,0.15)',
+  redLt: 'rgba(220,38,38,0.15)', amberLt: 'rgba(217,119,6,0.15)',
+  purpleLt: 'rgba(124,58,237,0.15)', tealLt: 'rgba(13,148,136,0.15)',
+};
+function makeChart(id, cfg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  new Chart(el, cfg);
+}
+const bnTick = v => (v/1e3).toFixed(0)+'T';
+const pctTick = v => v+'%';
+const defScales = (yLabel, yFmt, y1Label, y1Fmt) => ({
+  x: { grid:{display:false}, ticks:{color:tickC,font:{size:11}}, border:{display:false} },
+  y: { position:'left', grid:{color:gridC}, ticks:{color:tickC,font:{size:11},callback:yFmt||bnTick}, border:{display:false}, title:{display:!!yLabel,text:yLabel,color:tickC,font:{size:11}} },
+  ...(y1Label ? { y1: { position:'right', grid:{display:false}, ticks:{color:COLORS.coral,font:{size:11},callback:y1Fmt||pctTick}, border:{display:false}, min:0, title:{display:true,text:y1Label,color:COLORS.coral,font:{size:11}} }} : {}),
+});
+
+// ============================================================
+// BUILD HTML
+// ============================================================
+const html = [];
+
+// === SECTION 1: Revenue & Profit Trends ===
+html.push(`
+<div class="section" id="s1">
+  <div class="section-num">Section 01</div>
+  <h2>Revenue & Profit Trends — Cyclical Swings</h2>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="label">Revenue 2025</div>
+      <div class="value">${bnF(IS.revenue[12])}</div>
+      <div class="delta up">+12.6% YoY</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Peak Revenue</div>
+      <div class="value">${bnF(IS.revenue[8])}</div>
+      <div class="delta">2021 supercycle</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Net Profit 2025</div>
+      <div class="value">${bnF(IS.netProfit[12])}</div>
+      <div class="delta up">+29.1% YoY</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Gross Margin 2025</div>
+      <div class="value">${R.grossMargin[12].toFixed(1)}%</div>
+      <div class="delta up">vs 13.3% in 2024</div>
+    </div>
+  </div>
+  <div class="chart-wrap" style="height:340px"><canvas id="c1"></canvas></div>
+  <div class="insight">
+    <strong>Cyclical pattern identified:</strong> HPG shows a classic steel-cycle profile. Revenue surged 65% in 2021 during the post-COVID commodity supercycle, then corrected sharply in 2022–23 as steel prices normalized and China dumped excess supply. The 2024–25 recovery is volume-driven (Dung Quất 2 ramp-up) rather than price-driven, which is structurally healthier. <strong>Gross margin bottomed at 10.9% in 2023</strong> — the worst since listing — and has recovered to 15.7% in 2025, still well below the 27.5% peak. The margin compression in 2022–23 was driven by raw material cost lag (coking coal stayed elevated while steel ASPs fell).
+  </div>
+</div>
+`);
+
+// === SECTION 2: Liquidity ===
+html.push(`
+<div class="section" id="s2">
+  <div class="section-num">Section 02</div>
+  <h2>Liquidity Position</h2>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="label">Current Ratio</div>
+      <div class="value">${R.currentRatio[12].toFixed(2)}</div>
+      <div class="delta ${R.currentRatio[12]>1?'up':'down'}">${R.currentRatio[12]>1?'Above':'Below'} 1.0</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Quick Ratio</div>
+      <div class="value">${R.quickRatio[12].toFixed(2)}</div>
+      <div class="delta down">Below 0.5 threshold</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Cash Ratio</div>
+      <div class="value">${R.cashRatio[12].toFixed(2)}</div>
+      <div class="delta down">Lowest since listing</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">D/E Ratio</div>
+      <div class="value">${R.deRatio[12].toFixed(2)}</div>
+      <div class="delta warn">Elevated leverage</div>
+    </div>
+  </div>
+  <div class="chart-wrap" style="height:300px"><canvas id="c2"></canvas></div>
+  <div class="insight">
+    <strong>Liquidity is thin and deteriorating.</strong> The current ratio at 1.10 is the lowest since 2020, and the quick ratio of 0.25 means HPG cannot cover current liabilities without selling inventory. Cash ratio at 0.09 is critically low — only 9% of current obligations can be met with cash on hand. D/E has climbed back to 0.97x as HPG finances Dung Quất 2 expansion with debt. <span class="flag warn">Watch</span> The company is highly reliant on rolling over short-term borrowings (64.7T VND) which creates refinancing risk.
+  </div>
+</div>
+`);
+
+// === SECTION 3: FCF ===
+html.push(`
+<div class="section" id="s3">
+  <div class="section-num">Section 03</div>
+  <h2>Free Cash Flow Analysis</h2>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="label">FCF 2025</div>
+      <div class="value" style="color:var(--red)">${bnF(fcf[12])}</div>
+      <div class="delta down">Negative 5 of last 8 years</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Cumul. FCF 2018–25</div>
+      <div class="value" style="color:var(--red)">${bnF(fcf.slice(5).reduce((a,b)=>a+b,0))}</div>
+      <div class="delta down">Cash-burning period</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Capex 2025</div>
+      <div class="value">${bnF(CF.capex[12])}</div>
+      <div class="delta">1.6x operating CF</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Op CF 2025</div>
+      <div class="value">${bnF(CF.opCF[12])}</div>
+      <div class="delta up">Best since 2021</div>
+    </div>
+  </div>
+  <div class="chart-wrap" style="height:340px"><canvas id="c3"></canvas></div>
+  <div class="insight">
+    <strong>HPG is in a sustained capex supercycle.</strong> The Dung Quất Phase 2 integrated steel complex has consumed massive capital since 2018. Cumulative FCF from 2018–2025 is deeply negative (approximately −107T VND). Operating cash flow has recovered strongly to 15.7T in 2025, but capex remains enormous at 25.7T. <span class="flag danger">Red flag</span> FCF has been negative in 5 of the last 8 years. The thesis is that once Dung Quất 2 is fully operational, capex will normalize and FCF will swing positive — but this is a forward bet, not a demonstrated reality yet.
+  </div>
+</div>
+`);
+
+// === SECTION 4: Expense Flags ===
+html.push(`
+<div class="section" id="s4">
+  <div class="section-num">Section 04</div>
+  <h2>Expense Red Flags</h2>
+  <div class="chart-wrap" style="height:300px"><canvas id="c4"></canvas></div>
+  <table>
+    <thead><tr><th>Expense Item</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>Flag</th></tr></thead>
+    <tbody>
+      <tr><td>Financial exp (Bn)</td><td>${bnF(IS.financialExp[8])}</td><td>${bnF(IS.financialExp[9])}</td><td>${bnF(IS.financialExp[10])}</td><td>${bnF(IS.financialExp[11])}</td><td>${bnF(IS.financialExp[12])}</td><td><span class="flag danger">2x 2021</span></td></tr>
+      <tr><td>Interest exp (Bn)</td><td>${bnF(IS.interestExp[8])}</td><td>${bnF(IS.interestExp[9])}</td><td>${bnF(IS.interestExp[10])}</td><td>${bnF(IS.interestExp[11])}</td><td>${bnF(IS.interestExp[12])}</td><td><span class="flag warn">Rising</span></td></tr>
+      <tr><td>Selling exp (Bn)</td><td>${bnF(IS.sellingExp[8])}</td><td>${bnF(IS.sellingExp[9])}</td><td>${bnF(IS.sellingExp[10])}</td><td>${bnF(IS.sellingExp[11])}</td><td>${bnF(IS.sellingExp[12])}</td><td><span class="flag warn">Growing w/ volume</span></td></tr>
+      <tr><td>Interest paid on CF (Bn)</td><td>${bnF(CF.interestPaid[8])}</td><td>${bnF(CF.interestPaid[9])}</td><td>${bnF(CF.interestPaid[10])}</td><td>${bnF(CF.interestPaid[11])}</td><td>${bnF(CF.interestPaid[12])}</td><td><span class="flag danger">Cash drain</span></td></tr>
+      <tr><td>Capex on CF (Bn)</td><td>${bnF(CF.capex[8])}</td><td>${bnF(CF.capex[9])}</td><td>${bnF(CF.capex[10])}</td><td>${bnF(CF.capex[11])}</td><td>${bnF(CF.capex[12])}</td><td><span class="flag danger">Massive</span></td></tr>
+    </tbody>
+  </table>
+  <div class="insight">
+    <strong>Financial expenses are the #1 concern.</strong> They ballooned from 3.7T (2021) to 7.0T (2022) — a 88% jump — and remain at 4.6T in 2025. This is driven by the debt load financing the Dung Quất 2 project. Interest paid (cash basis) ran 2.9T in 2025. Selling expenses have scaled proportionally with revenue, which is normal. <strong>Capex</strong> at 35.5T in 2024 was the highest ever, representing the peak spend on Dung Quất 2. The 2025 figure at 25.7T suggests the tail end of this investment cycle.
+  </div>
+</div>
+`);
+
+// === SECTION 5: Dividends vs Cash Gen ===
+html.push(`
+<div class="section" id="s5">
+  <div class="section-num">Section 05</div>
+  <h2>Dividends vs. Cash Generation</h2>
+  <div class="chart-wrap" style="height:280px"><canvas id="c5"></canvas></div>
+  <div class="insight">
+    <strong>No — HPG is not over-distributing.</strong> Dividend payments have been negligible relative to cash generation. The largest payout was 2.3T in 2022 against operating CF of 12.3T. In most years, dividends are token amounts (under 30 Bn). HPG is clearly prioritizing reinvestment into the Dung Quất 2 expansion. <span class="flag ok">Healthy</span> Payout discipline is strong — the company is retaining virtually all earnings for growth capex.
+  </div>
+</div>
+`);
+
+// === SECTION 6: Valuation ===
+html.push(`
+<div class="section" id="s6">
+  <div class="section-num">Section 06</div>
+  <h2>Valuation Ratios</h2>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="label">P/E 2025</div>
+      <div class="value">${R.pe[12].toFixed(1)}x</div>
+      <div class="delta">vs 14.3x in 2024</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">P/B 2025</div>
+      <div class="value">${R.pb[12].toFixed(2)}x</div>
+      <div class="delta">vs 1.48x in 2024</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">EPS 2025</div>
+      <div class="value">${R.eps[12].toLocaleString()}</div>
+      <div class="delta up">+7.1% YoY</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">EV/EBITDA 2025</div>
+      <div class="value">${R.evEbitda[12].toFixed(1)}x</div>
+      <div class="delta">Compressing</div>
+    </div>
+  </div>
+  <div class="chart-wrap" style="height:320px"><canvas id="c6"></canvas></div>
+  <table>
+    <thead><tr><th>Metric</th>${focusYears.map(y=>'<th>'+y+'</th>').join('')}</tr></thead>
+    <tbody>
+      <tr><td>P/E</td>${R.pe.slice(5).map(v=>'<td>'+v.toFixed(1)+'x</td>').join('')}</tr>
+      <tr><td>P/B</td>${R.pb.slice(5).map(v=>'<td>'+v.toFixed(2)+'x</td>').join('')}</tr>
+      <tr><td>EPS (VND)</td>${R.eps.slice(5).map(v=>'<td>'+v.toLocaleString()+'</td>').join('')}</tr>
+      <tr><td>BVPS (VND)</td>${R.bvps.slice(5).map(v=>'<td>'+v.toLocaleString()+'</td>').join('')}</tr>
+      <tr><td>EV/EBITDA</td>${R.evEbitda.slice(5).map(v=>'<td>'+v.toFixed(1)+'x</td>').join('')}</tr>
+    </tbody>
+  </table>
+  <div class="insight">
+    <strong>Valuation is mid-cycle reasonable.</strong> P/E at 13.2x is well below the 2019 (20.3x) and 2023 (23.9x) peaks when earnings were depressed. P/B at 1.58x is near the historical low of 0.89x (2021 anomaly). EV/EBITDA at 10.0x is the best compression since 2021. <strong>BVPS has been diluted</strong> from 22,671 (2013) to 16,830 (2025) through share issuances faster than equity accumulation — this is a negative signal for book value per share. EPS recovery from the 2023 trough (1,175) to 2,013 in 2025 supports the P/E contraction.
+  </div>
+</div>
+`);
+
+// === SECTION 7: Price vs Earnings ===
+html.push(`
+<div class="section" id="s7">
+  <div class="section-num">Section 07</div>
+  <h2>Price Tracking vs. Earnings</h2>
+  <div class="chart-wrap" style="height:320px"><canvas id="c7"></canvas></div>
+  <div class="insight">
+    <strong>Price has been running ahead of earnings since 2022.</strong> During 2022–2023, EPS collapsed 81% from the 2021 peak (7,708 → 1,175), yet the market cap only dropped 47% from its nominal peak, keeping P/E elevated at 19–24x. This implies the market was pricing in recovery. In 2024–2025, EPS is recovering (+71% from trough) and P/E is compressing toward 13x, suggesting <strong>price is now more aligned with earnings</strong>. The stock isn't cheap on a trailing basis, but it's no longer in "hope premium" territory. If Dung Quất 2 delivers on its capacity promises, forward EPS could justify current levels.
+  </div>
+</div>
+`);
+
+// === SECTION 8: Profitability ===
+html.push(`
+<div class="section" id="s8">
+  <div class="section-num">Section 08</div>
+  <h2>Profitability Analysis</h2>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="label">ROE 2025</div>
+      <div class="value">${R.roe[12].toFixed(1)}%</div>
+      <div class="delta up">vs 11.1% in 2024</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">ROA 2025</div>
+      <div class="value">${R.roa[12].toFixed(1)}%</div>
+      <div class="delta">Improving</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">ROIC 2025</div>
+      <div class="value">${R.roic[12].toFixed(1)}%</div>
+      <div class="delta up">vs 7.4% in 2024</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">NOPAT 2025 (Bn)</div>
+      <div class="value">${bnF(nopat[12])}</div>
+      <div class="delta up">+33% YoY</div>
+    </div>
+  </div>
+  <div class="chart-wrap" style="height:320px"><canvas id="c8"></canvas></div>
+  <table>
+    <thead><tr><th>Metric</th>${focusYears.map(y=>'<th>'+y+'</th>').join('')}</tr></thead>
+    <tbody>
+      <tr><td>EBIT (Bn)</td>${R.ebit.slice(5).map(v=>'<td>'+bnF(v)+'</td>').join('')}</tr>
+      <tr><td>EBITDA (Bn)</td>${R.ebitda.slice(5).map(v=>'<td>'+bnF(v)+'</td>').join('')}</tr>
+      <tr><td>NOPAT (Bn)</td>${nopat.slice(5).map(v=>'<td>'+bnF(v)+'</td>').join('')}</tr>
+      <tr><td>EBIT Margin</td>${R.ebitMargin.slice(5).map(v=>'<td>'+v.toFixed(1)+'%</td>').join('')}</tr>
+      <tr><td>Net Margin</td>${R.netMargin.slice(5).map(v=>'<td>'+v.toFixed(1)+'%</td>').join('')}</tr>
+    </tbody>
+  </table>
+  <div class="insight">
+    <strong>Profitability is recovering but not yet mid-cycle.</strong> ROE at 12.7% is a dramatic improvement from the 6.9% trough but remains far from the 46% peak. ROIC at 9.1% is below the company's estimated WACC (~10–11%), which means HPG is not yet creating economic value on its invested capital. EBITDA has reached 28.9T — a new record — driven by higher volumes even though margins haven't fully recovered. <span class="flag warn">ROIC < WACC</span> Until ROIC consistently exceeds cost of capital, the expansion story hasn't paid off.
+  </div>
+</div>
+`);
+
+// === SECTION 9: Tax Rate & NOPAT Trend ===
+html.push(`
+<div class="section" id="s9">
+  <div class="section-num">Section 09</div>
+  <h2>Effective Tax Rate & NOPAT Trend</h2>
+  <div class="chart-wrap" style="height:300px"><canvas id="c9"></canvas></div>
+  <table>
+    <thead><tr><th>Year</th>${years.map(y=>'<th>'+y+'</th>').join('')}</tr></thead>
+    <tbody>
+      <tr><td>Eff. Tax Rate</td>${etr.map(v=>'<td>'+(v*100).toFixed(1)+'%</td>').join('')}</tr>
+      <tr><td>NOPAT (Bn)</td>${nopat.map(v=>'<td>'+bnF(v)+'</td>').join('')}</tr>
+    </tbody>
+  </table>
+  <div class="insight">
+    <strong>Effective tax rate is stable and favorable.</strong> It has ranged between 12–16% over the full history, with 2025 at 14.0%. HPG benefits from investment tax incentives tied to the Dung Quất economic zone. Deferred tax benefits have contributed positively in most years. NOPAT reached a new all-time high of 15.4T in 2025, surpassing even the 2021 supercycle peak of 34.2T in operating profit contribution (though at lower margins, higher volumes). The divergence between EBIT (20.4T) and NOPAT (15.4T) is the ~25% tax drag.
+  </div>
+</div>
+`);
+
+// === SECTION 10: DuPont 5-Factor ===
+html.push(`
+<div class="section" id="s10">
+  <div class="section-num">Section 10</div>
+  <h2>DuPont 5-Factor Decomposition</h2>
+  <div class="desc">ROE = Tax Burden × Interest Burden × EBIT Margin × Asset Turnover × Equity Multiplier</div>
+  <div class="chart-wrap" style="height:320px"><canvas id="c10"></canvas></div>
+  <table class="dupont-table">
+    <thead><tr><th>Factor</th>${focusYears.map(y=>'<th>'+y+'</th>').join('')}</tr></thead>
+    <tbody>
+      <tr><td>Tax burden (NI/EBT)</td>${dupont.slice(5).map(d=>'<td>'+d.taxBurden.toFixed(3)+'</td>').join('')}</tr>
+      <tr><td>Interest burden (EBT/EBIT)</td>${dupont.slice(5).map(d=>'<td>'+d.interestBurden.toFixed(3)+'</td>').join('')}</tr>
+      <tr><td>EBIT margin</td>${dupont.slice(5).map(d=>'<td>'+(d.ebitMargin*100).toFixed(1)+'%</td>').join('')}</tr>
+      <tr><td>Asset turnover</td>${dupont.slice(5).map(d=>'<td>'+d.assetTurnover.toFixed(2)+'x</td>').join('')}</tr>
+      <tr><td>Equity multiplier</td>${dupont.slice(5).map(d=>'<td>'+d.equityMult.toFixed(2)+'x</td>').join('')}</tr>
+      <tr style="font-weight:700;border-top:2px solid var(--text)"><td>→ ROE (computed)</td>${dupont.slice(5).map(d=>'<td>'+(d.roe*100).toFixed(1)+'%</td>').join('')}</tr>
+    </tbody>
+  </table>
+  <div class="insight">
+    <strong>DuPont reveals three key dynamics:</strong><br>
+    1. <strong>EBIT margin is the dominant swing factor.</strong> It collapsed from 25.2% (2021) to 8.1% (2023), then recovered to 13.1% (2025). This single factor explains most of the ROE volatility.<br>
+    2. <strong>Asset turnover is structurally declining</strong> — from 0.97x (2021) to 0.65x (2025) — as Dung Quất 2 assets are capitalized before generating full revenue. This is the "J-curve" drag on returns.<br>
+    3. <strong>Interest burden worsened in 2022–23</strong> (EBT/EBIT dropped to 0.76–0.81) as financial expenses surged, then improved in 2024–25 as debt costs moderated. The equity multiplier has been stable around 1.96x, reflecting consistent leverage. Tax efficiency has been steady (~0.85–0.86 retention).
+  </div>
+</div>
+`);
+
+// === SECTION 11: Mismatches ===
+html.push(`
+<div class="section" id="s11">
+  <div class="section-num">Section 11</div>
+  <h2>Profitability & Efficiency Mismatches</h2>
+  <div class="chart-wrap" style="height:300px"><canvas id="c11"></canvas></div>
+  <div class="insight">
+    <strong>The core mismatch: profitability is recovering but efficiency is declining.</strong><br><br>
+    <strong>Mismatch #1 — Margin recovery vs. asset utilization decline:</strong> Gross margin improved from 10.9% to 15.7%, yet asset turnover fell from 0.67x to 0.65x. HPG is earning more per unit sold but using assets less efficiently. This is the Dung Quất 2 effect — massive new assets aren't fully ramped.<br><br>
+    <strong>Mismatch #2 — Operating profit up, FCF still negative:</strong> Operating profit hit 17.9T (highest since 2021) but FCF remained negative at −10.1T because capex consumed 25.7T. Accounting profitability and cash profitability are diverging.<br><br>
+    <strong>Mismatch #3 — ROIC below cost of capital despite "recovery":</strong> ROIC at 9.1% is below a reasonable WACC estimate (~10–11%). The company is technically value-destructive on incremental invested capital. This gap must close once Dung Quất 2 reaches full utilization.<br><br>
+    <strong>Mismatch #4 — Inventory build vs. revenue:</strong> Inventory grew 14.6% YoY to 52.8T while revenue grew only 12.6%. Days inventory outstanding expanded from 123 to 137 days. This could signal slowing demand absorption or deliberate stockpiling ahead of capacity ramp.
+  </div>
+</div>
+`);
+
+// === SECTION 12: Overall Health ===
+html.push(`
+<div class="section" id="s12">
+  <div class="section-num">Section 12</div>
+  <h2>Overall Financial Health Assessment</h2>
+  <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="metric-card" style="border-color:var(--amber)">
+      <div class="label">Profitability</div>
+      <div class="value"><span class="grade" style="background:var(--amber-bg);color:var(--amber-text)">B+</span></div>
+      <div class="delta">Recovering, not peak</div>
+    </div>
+    <div class="metric-card" style="border-color:var(--red)">
+      <div class="label">Efficiency</div>
+      <div class="value"><span class="grade" style="background:var(--red-bg);color:var(--red-text)">C+</span></div>
+      <div class="delta">Asset drag from capex</div>
+    </div>
+    <div class="metric-card" style="border-color:var(--amber)">
+      <div class="label">Sustainability</div>
+      <div class="value"><span class="grade" style="background:var(--amber-bg);color:var(--amber-text)">B−</span></div>
+      <div class="delta">Dependent on DQ2 payoff</div>
+    </div>
+  </div>
+  <div class="verdict">
+    <h3>Verdict</h3>
+    <p>
+      HPG is a <strong>cyclical industrial titan in mid-transition</strong>. The company has bet massively on the Dung Quất 2 integrated steel complex — a capex program that has consumed over 100T VND since 2018, chronically burned free cash flow, and depressed returns on invested capital below the cost of capital.
+    </p>
+    <p style="margin-top:12px">
+      <strong>The bull case</strong> is that once Dung Quất 2 reaches full capacity, HPG will become Vietnam's lowest-cost, highest-volume integrated steel producer with structural moat advantages (coke oven → blast furnace → flat steel). EBITDA should normalize above 35T with asset turnover recovering to 0.8–0.9x, which would push ROIC above WACC and justify the multi-year capital sacrifice.
+    </p>
+    <p style="margin-top:12px">
+      <strong>The bear case</strong> is that Chinese steel overcapacity, weak construction demand, and persistently high interest costs could keep margins depressed while the debt load remains elevated. If gross margins fail to expand beyond 18–20%, the invested capital won't generate adequate returns, and BVPS dilution from share issuances will continue to erode shareholder value.
+    </p>
+    <p style="margin-top:12px">
+      <strong>Key risks:</strong> (1) Short-term debt rollover risk — 64.7T in short-term borrowings needs constant refinancing. (2) Steel price cyclicality — a downturn before full DQ2 ramp would stress the balance sheet. (3) Chinese overcapacity could suppress Vietnamese domestic ASPs.
+    </p>
+    <p style="margin-top:12px">
+      <strong>Key catalysts:</strong> (1) Dung Quất 2 full commissioning → step-change in volume and cost efficiency. (2) Public infrastructure spending acceleration in Vietnam. (3) Anti-dumping measures on Chinese steel imports.
+    </p>
+  </div>
+</div>
+`);
+
+document.getElementById('content').innerHTML = html.join('');
+
+// ============================================================
+// RENDER CHARTS
+// ============================================================
+
+// C1: Revenue & Margins
+makeChart('c1', {
+  data: {
+    labels: years,
+    datasets: [
+      { type:'bar', label:'Revenue', data:IS.revenue.map(v=>v/1e9), backgroundColor:COLORS.blue, borderRadius:3, yAxisID:'y', order:2 },
+      { type:'bar', label:'Net Profit', data:IS.netProfit.map(v=>v/1e9), backgroundColor:COLORS.teal, borderRadius:3, yAxisID:'y', order:2 },
+      { type:'line', label:'Gross Margin', data:R.grossMargin, borderColor:COLORS.coral, pointRadius:2, tension:.3, yAxisID:'y1', order:1 },
+      { type:'line', label:'Net Margin', data:R.netMargin, borderColor:COLORS.purple, pointRadius:2, tension:.3, yAxisID:'y1', order:1, borderDash:[4,3] },
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales: defScales('Bn VND', bnTick, 'Margin %', pctTick)
+  }
+});
+
+// C2: Liquidity
+makeChart('c2', {
+  type:'line',
+  data: {
+    labels: years,
+    datasets: [
+      { label:'Current', data:R.currentRatio, borderColor:COLORS.blue, tension:.3, pointRadius:3 },
+      { label:'Quick', data:R.quickRatio, borderColor:COLORS.amber, tension:.3, pointRadius:3 },
+      { label:'Cash', data:R.cashRatio, borderColor:COLORS.red, tension:.3, pointRadius:3, borderDash:[4,3] },
+      { label:'D/E', data:R.deRatio, borderColor:COLORS.purple, tension:.3, pointRadius:3, yAxisID:'y1' },
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'top',labels:{boxWidth:12,font:{size:11}}}},
+    scales: {
+      x:{grid:{display:false},ticks:{color:tickC,font:{size:11}},border:{display:false}},
+      y:{grid:{color:gridC},ticks:{color:tickC,font:{size:11}},border:{display:false},title:{display:true,text:'Ratio',color:tickC,font:{size:11}}},
+      y1:{position:'right',grid:{display:false},ticks:{color:COLORS.purple,font:{size:11}},border:{display:false},title:{display:true,text:'D/E',color:COLORS.purple,font:{size:11}}},
+    }
+  }
+});
+
+// C3: FCF waterfall-style
+makeChart('c3', {
+  data: {
+    labels: years,
+    datasets: [
+      { type:'bar', label:'Operating CF', data:CF.opCF.map(v=>v/1e9), backgroundColor:COLORS.blue, borderRadius:3, order:2 },
+      { type:'bar', label:'Capex', data:CF.capex.map(v=>-v/1e9), backgroundColor:COLORS.red, borderRadius:3, order:2 },
+      { type:'line', label:'FCF', data:fcf.map(v=>v/1e9), borderColor:COLORS.teal, backgroundColor:COLORS.tealLt, fill:true, tension:.3, pointRadius:3, order:1 },
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'top',labels:{boxWidth:12,font:{size:11}}}},
+    scales: { x:{grid:{display:false},ticks:{color:tickC,font:{size:11}},border:{display:false}},
+      y:{grid:{color:gridC},ticks:{color:tickC,font:{size:11},callback:bnTick},border:{display:false}} }
+  }
+});
+
+// C4: Expense Composition
+makeChart('c4', {
+  type:'bar',
+  data: {
+    labels: years,
+    datasets: [
+      { label:'COGS', data:IS.cogs.map(v=>v/1e9), backgroundColor:'#94A3B8' },
+      { label:'Financial', data:IS.financialExp.map(v=>v/1e9), backgroundColor:COLORS.red },
+      { label:'Selling', data:IS.sellingExp.map(v=>v/1e9), backgroundColor:COLORS.amber },
+      { label:'G&A', data:IS.gaExp.map(v=>v/1e9), backgroundColor:COLORS.purple },
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'top',labels:{boxWidth:12,font:{size:11}}}},
+    scales: { x:{stacked:true,grid:{display:false},ticks:{color:tickC,font:{size:11}},border:{display:false}},
+      y:{stacked:true,grid:{color:gridC},ticks:{color:tickC,font:{size:11},callback:bnTick},border:{display:false}} }
+  }
+});
+
+// C5: Dividends vs OpCF
+makeChart('c5', {
+  data: {
+    labels: years,
+    datasets: [
+      { type:'bar', label:'Operating CF', data:CF.opCF.map(v=>v/1e9), backgroundColor:COLORS.blue, borderRadius:3, order:2 },
+      { type:'bar', label:'Dividends Paid', data:CF.divPaid.map(v=>v/1e9), backgroundColor:COLORS.coral, borderRadius:3, order:2 },
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'top',labels:{boxWidth:12,font:{size:11}}}},
+    scales: { x:{grid:{display:false},ticks:{color:tickC,font:{size:11}},border:{display:false}},
+      y:{grid:{color:gridC},ticks:{color:tickC,font:{size:11},callback:bnTick},border:{display:false}} }
+  }
+});
+
+// C6: PE & PB
+makeChart('c6', {
+  data: {
+    labels: years,
+    datasets: [
+      { type:'bar', label:'P/E', data:R.pe, backgroundColor:COLORS.blue, borderRadius:3, yAxisID:'y', order:2 },
+      { type:'line', label:'P/B', data:R.pb, borderColor:COLORS.coral, pointRadius:3, tension:.3, yAxisID:'y1', order:1 },
+      { type:'line', label:'EV/EBITDA', data:R.evEbitda, borderColor:COLORS.teal, pointRadius:3, tension:.3, yAxisID:'y', order:1, borderDash:[4,3] },
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'top',labels:{boxWidth:12,font:{size:11}}}},
+    scales: { x:{grid:{display:false},ticks:{color:tickC,font:{size:11}},border:{display:false}},
+      y:{grid:{color:gridC},ticks:{color:tickC,font:{size:11},callback:v=>v+'x'},border:{display:false},title:{display:true,text:'P/E & EV/EBITDA',color:tickC,font:{size:11}}},
+      y1:{position:'right',grid:{display:false},ticks:{color:COLORS.coral,font:{size:11},callback:v=>v+'x'},border:{display:false},title:{display:true,text:'P/B',color:COLORS.coral,font:{size:11}}},
+    }
+  }
+});
+
+// C7: EPS vs PE
+makeChart('c7', {
+  data: {
+    labels: years,
+    datasets: [
+      { type:'bar', label:'EPS (VND)', data:R.eps, backgroundColor:COLORS.teal, borderRadius:3, yAxisID:'y', order:2 },
+      { type:'line', label:'P/E', data:R.pe, borderColor:COLORS.coral, pointRadius:3, tension:.3, yAxisID:'y1', order:1 },
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'top',labels:{boxWidth:12,font:{size:11}}}},
+    scales: { x:{grid:{display:false},ticks:{color:tickC,font:{size:11}},border:{display:false}},
+      y:{grid:{color:gridC},ticks:{color:tickC,font:{size:11},callback:v=>v.toLocaleString()},border:{display:false},title:{display:true,text:'EPS (VND)',color:tickC,font:{size:11}}},
+      y1:{position:'right',grid:{display:false},ticks:{color:COLORS.coral,font:{size:11},callback:v=>v+'x'},border:{display:false},title:{display:true,text:'P/E',color:COLORS.coral,font:{size:11}}},
+    }
+  }
+});
+
+// C8: ROE/ROA/ROIC
+makeChart('c8', {
+  type:'line',
+  data: {
+    labels: years,
+    datasets: [
+      { label:'ROE', data:R.roe, borderColor:COLORS.blue, pointRadius:3, tension:.3, borderWidth:2.5 },
+      { label:'ROA', data:R.roa, borderColor:COLORS.teal, pointRadius:3, tension:.3 },
+      { label:'ROIC', data:R.roic, borderColor:COLORS.purple, pointRadius:3, tension:.3, borderDash:[4,3] },
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'top',labels:{boxWidth:12,font:{size:11}}}},
+    scales: { x:{grid:{display:false},ticks:{color:tickC,font:{size:11}},border:{display:false}},
+      y:{grid:{color:gridC},ticks:{color:tickC,font:{size:11},callback:pctTick},border:{display:false}} }
+  }
+});
+
+// C9: ETR & NOPAT
+makeChart('c9', {
+  data: {
+    labels: years,
+    datasets: [
+      { type:'bar', label:'NOPAT', data:nopat.map(v=>v/1e9), backgroundColor:COLORS.purple, borderRadius:3, yAxisID:'y', order:2 },
+      { type:'line', label:'Eff. Tax Rate', data:etr.map(v=>+(v*100).toFixed(1)), borderColor:COLORS.coral, pointRadius:3, tension:.3, yAxisID:'y1', order:1 },
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'top',labels:{boxWidth:12,font:{size:11}}}},
+    scales: defScales('NOPAT (Bn)', bnTick, 'ETR %', pctTick)
+  }
+});
+
+// C10: DuPont stacked area (indexed)
+makeChart('c10', {
+  type:'line',
+  data: {
+    labels: years,
+    datasets: [
+      { label:'Tax Burden', data:dupont.map(d=>+(d.taxBurden*100).toFixed(1)), borderColor:COLORS.gray, pointRadius:2, tension:.3, borderDash:[2,2] },
+      { label:'Interest Burden', data:dupont.map(d=>+(d.interestBurden*100).toFixed(1)), borderColor:COLORS.red, pointRadius:2, tension:.3 },
+      { label:'EBIT Margin (%)', data:dupont.map(d=>+(d.ebitMargin*100).toFixed(1)), borderColor:COLORS.blue, pointRadius:3, tension:.3, borderWidth:2.5 },
+      { label:'Asset Turnover (×100)', data:dupont.map(d=>+(d.assetTurnover*100).toFixed(1)), borderColor:COLORS.teal, pointRadius:2, tension:.3 },
+      { label:'Equity Mult (×100)', data:dupont.map(d=>+(d.equityMult*100).toFixed(1)), borderColor:COLORS.amber, pointRadius:2, tension:.3 },
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'top',labels:{boxWidth:12,font:{size:11}}}},
+    scales: { x:{grid:{display:false},ticks:{color:tickC,font:{size:11}},border:{display:false}},
+      y:{grid:{color:gridC},ticks:{color:tickC,font:{size:11}},border:{display:false},title:{display:true,text:'Factor value (×100 for turnover/mult)',color:tickC,font:{size:11}}} }
+  }
+});
+
+// C11: Mismatch — Margin vs Turnover
+makeChart('c11', {
+  data: {
+    labels: years,
+    datasets: [
+      { type:'bar', label:'Gross Margin %', data:R.grossMargin, backgroundColor:COLORS.blue, borderRadius:3, yAxisID:'y', order:2 },
+      { type:'line', label:'Asset Turnover', data:R.assetTurnover, borderColor:COLORS.coral, pointRadius:3, tension:.3, yAxisID:'y1', order:1 },
+      { type:'line', label:'ROIC %', data:R.roic, borderColor:COLORS.teal, pointRadius:3, tension:.3, yAxisID:'y', order:1, borderDash:[4,3] },
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,position:'top',labels:{boxWidth:12,font:{size:11}}}},
+    scales: { x:{grid:{display:false},ticks:{color:tickC,font:{size:11}},border:{display:false}},
+      y:{grid:{color:gridC},ticks:{color:tickC,font:{size:11},callback:pctTick},border:{display:false},title:{display:true,text:'%',color:tickC,font:{size:11}}},
+      y1:{position:'right',grid:{display:false},ticks:{color:COLORS.coral,font:{size:11},callback:v=>v+'x'},border:{display:false},title:{display:true,text:'Asset Turnover',color:COLORS.coral,font:{size:11}}},
+    }
+  }
+});
+</script>
+</body>
+</html>
